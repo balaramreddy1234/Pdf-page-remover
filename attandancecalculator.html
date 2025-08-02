@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Attendance Calculator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .calculator-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: space-between;
+        }
+        
+        .calculator-box {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            flex: 1;
+            min-width: 250px;
+            margin-bottom: 20px;
+        }
+        
+        h2 {
+            color: #3498db;
+            font-size: 1.3rem;
+            margin-top: 0;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        .result {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        
+        .good {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .danger {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .attendance-visual {
+            height: 20px;
+            background-color: #eee;
+            border-radius: 10px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        
+        .attendance-bar {
+            height: 100%;
+            background-color: #3498db;
+            width: 0%;
+            transition: width 0.5s;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Student Attendance Calculator</h1>
+    
+    <div class="calculator-container">
+        <div class="calculator-box">
+            <h2>Attendance Percentage</h2>
+            <div class="form-group">
+                <label for="total-days">Total Class Days:</label>
+                <input type="number" id="total-days" min="1" value="30">
+            </div>
+            <div class="form-group">
+                <label for="days-attended">Days Attended:</label>
+                <input type="number" id="days-attended" min="0" value="25">
+            </div>
+            <button onclick="calculatePercentage()">Calculate</button>
+            <div id="percentage-result" class="result hidden">
+                <div class="attendance-visual">
+                    <div class="attendance-bar" id="percentage-bar"></div>
+                </div>
+                <p id="percentage-text"></p>
+                <p id="percentage-status"></p>
+            </div>
+        </div>
+        
+        <div class="calculator-box">
+            <h2>Maximum Allowable Absences</h2>
+            <div class="form-group">
+                <label for="total-days-absence">Total Class Days:</label>
+                <input type="number" id="total-days-absence" min="1" value="30">
+            </div>
+            <div class="form-group">
+                <label for="min-percentage">Minimum Required Percentage:</label>
+                <input type="number" id="min-percentage" min="1" max="100" value="75">
+            </div>
+            <button onclick="calculateAbsences()">Calculate</button>
+            <div id="absence-result" class="result hidden">
+                <p id="absence-text"></p>
+            </div>
+        </div>
+        
+        <div class="calculator-box">
+            <h2>Attendance Projection</h2>
+            <div class="form-group">
+                <label for="current-attended">Currently Attended:</label>
+                <input type="number" id="current-attended" min="0" value="20">
+            </div>
+            <div class="form-group">
+                <label for="current-total">Current Total Days:</label>
+                <input type="number" id="current-total" min="1" value="25">
+            </div>
+            <div class="form-group">
+                <label for="future-absences">Future Expected Absences:</label>
+                <input type="number" id="future-absences" min="0" value="3">
+            </div>
+            <div class="form-group">
+                <label for="remaining-days">Remaining Class Days:</label>
+                <input type="number" id="remaining-days" min="1" value="15">
+            </div>
+            <button onclick="calculateProjection()">Calculate</button>
+            <div id="projection-result" class="result hidden">
+                <div class="attendance-visual">
+                    <div class="attendance-bar" id="projection-bar"></div>
+                </div>
+                <p id="projection-text"></p>
+                <p id="projection-status"></p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function calculatePercentage() {
+            const totalDays = parseInt(document.getElementById('total-days').value);
+            const daysAttended = parseInt(document.getElementById('days-attended').value);
+            
+            if (daysAttended > totalDays) {
+                alert("Days attended cannot be greater than total days!");
+                return;
+            }
+            
+            const percentage = (daysAttended / totalDays) * 100;
+            const roundedPercentage = Math.round(percentage * 10) / 10;
+            
+            document.getElementById('percentage-text').textContent = 
+                `Attendance Percentage: ${roundedPercentage}%`;
+                
+            const percentageBar = document.getElementById('percentage-bar');
+            percentageBar.style.width = `${percentage}%`;
+            
+            let statusElement = document.getElementById('percentage-status');
+            let resultElement = document.getElementById('percentage-result');
+            
+            if (percentage >= 90) {
+                statusElement.textContent = "Excellent Attendance";
+                resultElement.className = "result good";
+            } else if (percentage >= 75) {
+                statusElement.textContent = "Good Attendance";
+                resultElement.className = "result good";
+            } else if (percentage >= 60) {
+                statusElement.textContent = "Warning: Attendance Below Recommended Level";
+                resultElement.className = "result warning";
+            } else {
+                statusElement.textContent = "Danger: Poor Attendance";
+                resultElement.className = "result danger";
+            }
+            
+            resultElement.classList.remove('hidden');
+        }
+        
+        function calculateAbsences() {
+            const totalDays = parseInt(document.getElementById('total-days-absence').value);
+            const minPercentage = parseInt(document.getElementById('min-percentage').value) / 100;
+            
+            const maxAbsences = totalDays - Math.ceil(totalDays * minPercentage);
+            
+            document.getElementById('absence-text').textContent = 
+                `You can miss up to ${maxAbsences} days and still maintain ${minPercentage*100}% attendance.`;
+                
+            document.getElementById('absence-result').classList.remove('hidden');
+        }
+        
+        function calculateProjection() {
+            const currentAttended = parseInt(document.getElementById('current-attended').value);
+            const currentTotal = parseInt(document.getElementById('current-total').value);
+            const futureAbsences = parseInt(document.getElementById('future-absences').value);
+            const remainingDays = parseInt(document.getElementById('remaining-days').value);
+            
+            const finalAttended = currentAttended + (remainingDays - futureAbsences);
+            const finalTotal = currentTotal + remainingDays;
+            
+            if (futureAbsences > remainingDays) {
+                alert("Future absences cannot exceed remaining days!");
+                return;
+            }
+            
+            const percentage = (finalAttended / finalTotal) * 100;
+            const roundedPercentage = Math.round(percentage * 10) / 10;
+            
+            document.getElementById('projection-text').textContent = 
+                `Projected Final Attendance: ${roundedPercentage}% (${finalAttended}/${finalTotal} days)`;
+                
+            const projectionBar = document.getElementById('projection-bar');
+            projectionBar.style.width = `${percentage}%`;
+            
+            let statusElement = document.getElementById('projection-status');
+            let resultElement = document.getElementById('projection-result');
+            
+            if (percentage >= 90) {
+                statusElement.textContent = "Projection: Excellent Attendance";
+                resultElement.className = "result good";
+            } else if (percentage >= 75) {
+                statusElement.textContent = "Projection: Good Attendance";
+                resultElement.className = "result good";
+            } else if (percentage >= 60) {
+                statusElement.textContent = "Projection: Warning - May Fall Below Requirements";
+                resultElement.className = "result warning";
+            } else {
+                statusElement.textContent = "Projection: Danger - Will Not Meet Requirements";
+                resultElement.className = "result danger";
+            }
+            
+            resultElement.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
