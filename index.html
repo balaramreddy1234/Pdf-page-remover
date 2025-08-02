@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Remove Pages from PDF</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    .page-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .page-item {
+      border: 1px solid #ccc;
+      padding: 5px;
+      width: 120px;
+      text-align: center;
+    }
+    canvas {
+      width: 100px;
+      height: auto;
+    }
+    .actions {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h2>PDF Page Remover</h2>
+  <input type="file" id="file-input" accept="application/pdf"><br><br>
+
+  <div class="page-list" id="page-list"></div>
+
+  <div class="actions">
+    <button onclick="removeSelectedPages()">Remove Selected Pages & Download</button>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib/dist/pdf-lib.min.js"></script>
+  <script>
+    const fileInput = document.getElementById('file-input');
+    const pageList = document.getElementById('page-list');
+    let originalPdfBytes;
+
+    fileInput.addEventListener('change', async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      originalPdfBytes = await file.arrayBuffer();
+      const loadingTask = pdfjsLib.getDocument({ data: originalPdfBytes });
+      const pdf = await loadingTask.promise;
+
+      pageList.innerHTML = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const viewport = page.getViewport({ scale: 0.2 });
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        await page.render({ canvasContext: context, viewport }).promise;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'page-item';
+        wrapper.innerHTML = `
+          <label>
+            <input type="checkbox" value="${i - 1}">
+            Page ${i}
+          </label>
+        `;
+        wrapper.appendChild(canvas);
+        pageList.appendChild(wrapper);
+      }
+    });
+
+    async function removeSelectedPages() {
+      const selected = [...document.querySelectorAll('input[type=checkbox]:checked')].map(cb => parseInt(cb.value));
+
+      if (selected.length === 0) {
+        alert('Please select at least one page to remove.');
+        return;
+      }
+
+      const pdfDoc = await PDFLib.PDFDocument.load(originalPdfBytes);
+      const total = pdfDoc.getPageCount();
+      const pagesToKeep = [...Array(total).keys()].filter(i => !selected.includes(i));
+
+      const newPdf = await PDFLib.PDFDocument.create();
+      const copiedPages = await newPdf.copyPages(pdfDoc, pagesToKeep);
+
+      copiedPages.forEach(p => newPdf.addPage(p));
+
+      const newPdfBytes = await newPdf.save();
+
+      const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'modified.pdf';
+      link.click();
+    }
+  </script>
+</body>
+</html>
